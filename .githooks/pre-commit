@@ -1,0 +1,23 @@
+#!/bin/bash
+set -e
+
+echo "Running pre-commit checks..."
+
+files=$(git diff --cached --name-only --diff-filter=ACM | grep '.go$')
+if [ -n "$files" ]; then
+  unformatted=$(gofmt -l $files)
+  if [ -n "$unformatted" ]; then
+    echo "Some Go files are not formatted:"
+    echo $unformatted
+    exit 1
+  fi
+
+  exit_status=0
+  for file in $files; do
+    if ! staticcheck $file; then
+      exit_status=1
+    fi
+  done
+
+  exit $exit_status
+fi
